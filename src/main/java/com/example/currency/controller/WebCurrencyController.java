@@ -9,6 +9,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
+import java.util.Map;
 
 @Controller
 @RequestMapping("/currencies")
@@ -79,11 +80,11 @@ public class WebCurrencyController {
             @RequestParam Integer to,
             @RequestParam BigDecimal amount,
             Model model) {
-        BigDecimal result = conversionService.convertCurrency(from, to, amount);
-        model.addAttribute("result", result);
-        model.addAttribute("from", from);
-        model.addAttribute("to", to);
-        model.addAttribute("amount", amount);
+        Map<String, Object> result = conversionService.convertCurrencyWithValidation(from, to, amount);
+        model.addAttribute("result", result.get("result"));
+        model.addAttribute("from", result.get("from"));
+        model.addAttribute("to", result.get("to"));
+        model.addAttribute("amount", result.get("amount"));
         model.addAttribute("currencies", currencyService.getAllCurrenciesFromDb());
         return "convert";
     }
