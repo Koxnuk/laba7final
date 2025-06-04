@@ -42,17 +42,9 @@ public class CurrencyRateController {
             @RequestParam Integer from,
             @RequestParam Integer to,
             @RequestParam BigDecimal amount) {
-        if (amount.compareTo(BigDecimal.ZERO) <= 0) {
-            throw new IllegalArgumentException("Amount must be greater than zero");
-        }
         try {
-            BigDecimal result = conversionService.convertCurrency(from, to, amount);
-            return ResponseEntity.ok(Map.of(
-                    "amount", amount,
-                    "from", from,
-                    "to", to,
-                    "result", result
-            ));
+            Map<String, Object> result = conversionService.convertCurrencyWithValidation(from, to, amount);
+            return ResponseEntity.ok(result);
         } catch (Exception e) {
             throw new IllegalArgumentException("Conversion error: " + e.getMessage());
         }
