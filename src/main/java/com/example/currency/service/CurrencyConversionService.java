@@ -9,7 +9,9 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -31,11 +33,20 @@ public class CurrencyConversionService {
         this.cacheService = cacheService;
     }
 
-    public BigDecimal convertCurrency(Integer fromCurId, Integer toCurId, BigDecimal amount) {
+    public Map<String, Object> convertCurrencyWithValidation(Integer fromCurId, Integer toCurId, BigDecimal amount) {
+        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Amount must be greater than zero");
+        }
+
         String cacheKey = "convert:" + fromCurId + ":" + toCurId + ":" + amount.toString();
         Optional<Object> cached = cacheService.get(cacheKey);
         if (cached.isPresent()) {
-            return (BigDecimal) cached.get();
+            return Map.of(
+                    "amount", amount,
+                    "from", fromCurId,
+                    "to", toCurId,
+                    "result", (BigDecimal) cached.get()
+            );
         }
 
         CurrencyRate fromRate = currencyService.getCurrencyRate(fromCurId);
@@ -51,7 +62,16 @@ public class CurrencyConversionService {
                 .divide(toRatePerUnit, 2, RoundingMode.HALF_UP);
 
         cacheService.put(cacheKey, result);
-        return result;
+        return Map.of(
+                "amount", amount,
+                "from", fromCurId,
+                "to", toCurId,
+                "result", result
+        );
+    }
+
+    public BigDecimal convertCurrency(Integer fromCurId, Integer toCurId, BigDecimal amount) {
+        return (BigDecimal) convertCurrencyWithValidation(fromCurId, toCurId, amount).get("result");
     }
 
     public CurrencyRate createRate(CurrencyRate rate) {
